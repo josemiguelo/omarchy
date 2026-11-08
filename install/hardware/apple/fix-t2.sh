@@ -8,9 +8,17 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # single-boot install that wiped macOS has no such volume, so the fetch comes
   # up empty; those machines need the firmware supplied from a macOS copy or a
   # downloaded recovery image instead.
+  #
+  # T2 Macs run the stock linux-omarchy kernel with KaiT2en's t2bce stack built
+  # by DKMS (t2bce-stack-dkms), instead of linux-t2 with t2bce in-tree. Both
+  # claim PCI 106b:1801, so linux-t2 must not be installed alongside.
+  # Stage 1 of the KaiT2en port: only the BCE driver source changes; the
+  # userspace below still comes from [arch-mact2].
+  # TODO: t2bce-stack-dkms lives in no pacman repo yet; the install fails here
+  # until one is added in install/hardware/pacman.sh.
   omarchy-pkg-add \
-    linux-t2 \
-    linux-t2-headers \
+    linux-omarchy-headers \
+    t2bce-stack-dkms \
     apple-t2-audio-config \
     apple-bcm-firmware-fetcher \
     t2fanrd
@@ -24,9 +32,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     echo "hci_bcm4377"
   } > /etc/modules-load.d/t2.conf
 
-  # linux-t2 7.1.4 replaced the apple-bce driver with t2bce; t2bce_vhci is the
-  # virtual USB host controller the internal keyboard hangs off, and mkinitcpio
-  # pulls t2bce_core/t2bce_dma in via module dependencies.
+  # t2bce_vhci (from t2bce-stack-dkms) is the virtual USB host controller the
+  # internal keyboard hangs off, and mkinitcpio pulls t2bce_core/t2bce_dma in
+  # via module dependencies. It must be in the initramfs to type the disk
+  # encryption password.
   mkdir -p /etc/mkinitcpio.conf.d
   echo "MODULES+=(t2bce_vhci usbhid hid_apple hid_generic xhci_pci xhci_hcd)" > \
     /etc/mkinitcpio.conf.d/apple-t2.conf
