@@ -30,7 +30,19 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # The packages come from the signed [t2-arch-packages] repo
   # (install/hardware/pacman.sh). Its keyring goes first so the key is trusted
   # before anything from that repo is verified on later updates.
-  omarchy-pkg-add t2-arch-packages-keyring
+  #
+  # The keyring package's post-install runs pacman-key --populate. During an
+  # ISO install the installer is creating the target's keyring in the
+  # background right now, and a second pacman-key on that keyring makes it fail
+  # (its lsigns find no keys). There the scriptlet is skipped and the installer
+  # populates t2-arch-packages once its keyring is done (omarchy-iso's
+  # _populate_hardware_keyrings); everywhere else it runs as usual.
+  if [[ ${OMARCHY_FIRST_INSTALL:-} == 1 ]]; then
+    pacman -Q t2-arch-packages-keyring &>/dev/null ||
+      pacman -S --noconfirm --needed --noscriptlet t2-arch-packages-keyring
+  else
+    omarchy-pkg-add t2-arch-packages-keyring
+  fi
   omarchy-pkg-add \
     linux-omarchy-headers \
     t2bce-stack-dkms \
