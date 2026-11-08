@@ -51,7 +51,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # downloaded recovery image instead.
   #
   # It mounts that volume with the APFS driver, which linux-t2 builds in and
-  # linux-omarchy does not: linux-apfs-rw-dkms provides it. DKMS builds only at
+  # linux-omarchy does not: Arch's linux-apfs-rw-dkms (extra) provides it. DKMS builds only at
   # the end of a transaction, so the driver goes in first, on its own.
   omarchy-pkg-add linux-apfs-rw-dkms
   omarchy-pkg-add apple-bcm-firmware-fetcher
