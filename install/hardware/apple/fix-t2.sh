@@ -13,6 +13,12 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #   t2smp-dkms           offlines secondary CPUs around suspend; the early-resume
   #                        CPU bring-up otherwise takes seconds per CPU
   #   t2thunderbolt-dkms   Thunderbolt PM ordering (NHI before tunnelled ports)
+  #   t2-precision-trackpad-dkms
+  #                        the internal trackpad's multitouch and Force Touch: stock
+  #                        kernels drive it as a plain mouse (no scroll, no tap)
+  #   t2-bluetooth-dkms    btbcm/hci_uart/hci_bcm4377 with KaiT2en's Apple fixes:
+  #                        stock btbcm drops these Macs' LE advertisements, so LE
+  #                        keyboards and mice never show up or can't connect
   #   t2-fan-control       fan daemon on t2smc, replaces t2fanrd
   #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
   #   t2-dkms-guard        aborts a linux-omarchy upgrade whose headers cannot build
@@ -32,6 +38,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2sbs-dkms \
     t2smp-dkms \
     t2thunderbolt-dkms \
+    t2-precision-trackpad-dkms \
+    t2-bluetooth-dkms \
     t2-fan-control \
     t2bce-audio-ucm \
     t2-dkms-guard
@@ -85,10 +93,13 @@ EOF
   # t2bce_vhci is the virtual USB host controller the internal keyboard hangs
   # off; mkinitcpio pulls t2bce_core/t2bce_dma in via module dependencies. It
   # must be in the initramfs to type the disk encryption password.
+  # t2_precision_trackpad goes first: it must be registered when t2bce_vhci
+  # enumerates the trackpad, or hid-apple takes its mouse interface. It claims
+  # only that interface, so hid-apple keeps the keyboard.
   # t2smc before t2sbs, so BAT0 already has charge_control_end_threshold when
   # udev and UPower first see it.
   mkdir -p /etc/mkinitcpio.conf.d
-  echo "MODULES+=(t2bce_vhci usbhid hid_apple hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
+  echo "MODULES+=(t2_precision_trackpad t2bce_vhci usbhid hid_apple hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
     /etc/mkinitcpio.conf.d/apple-t2.conf
 
   # pci=noaer: Apple firmware denies AER, and Linux using it anyway stalls
