@@ -27,8 +27,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # up empty; those machines need the firmware supplied from a macOS copy or a
   # downloaded recovery image instead.
   #
-  # TODO: the KaiT2en packages live in no pacman repo yet; the install fails
-  # here until one is added in install/hardware/pacman.sh.
+  # The packages come from the signed [t2-arch-packages] repo
+  # (install/hardware/pacman.sh). Its keyring goes first so the key is trusted
+  # before anything from that repo is verified on later updates.
+  omarchy-pkg-add t2-arch-packages-keyring
   omarchy-pkg-add \
     linux-omarchy-headers \
     t2bce-stack-dkms \
