@@ -65,11 +65,12 @@ The Apple T2 Security Chip was introduced in 2017. The T2 chip was discontinued 
 - MacBook Pro 13-inch (2019, two Thunderbolt 3 ports) – Model: A2159
 - MacBook Pro 13-inch (2019, four Thunderbolt 3 ports) – Model: A2178
 - MacBook Pro 15-inch (2019) – Model: A1990
+- MacBook Pro 16-inch (2019) – Model: A2141
 - iMac (Retina 5K, 27-inch, 2020) – Model: A2115 (iMac20,1 and iMac20,2)
 - MacBook Pro 13-inch (2020, two Thunderbolt 3 ports) – Model: A2265
 - MacBook Pro 15-inch (2020) – Model: A1990
 
-On these models, the installer automatically sets up the patched `linux-t2` kernel, the T2 audio configuration, Apple's Broadcom Wi-Fi/Bluetooth firmware, and fan control via `t2fanrd`. The Touch Bar runs on the kernel's built-in Boot Camp-style support.
+On these models, the installer keeps the standard Omarchy kernel and adds the [KaiT2en](https://github.com/kaiT2en/KaiT2en-Fedora) T2 drivers through DKMS: the internal keyboard and trackpad, audio with the T2 audio configuration, fan control and battery charge limit through the T2 SMC, and fast wake from sleep. It also installs Apple's Broadcom Wi-Fi/Bluetooth firmware and the KaiT2en fan control app. Kernel updates that would break these drivers are stopped before they install. The Touch Bar runs on the kernel's built-in Boot Camp-style support. Hot-plugging Thunderbolt docks or eGPUs that carry PCIe devices is not supported.
 
 #### iMac Retina 5K (2017)
 

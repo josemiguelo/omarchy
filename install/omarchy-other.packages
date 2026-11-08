@@ -70,9 +70,14 @@ lsp-plugins-lv2
 
 # T2 MacBook support packages
 apple-bcm-firmware-fetcher
-apple-t2-audio-config
+t2-dkms-guard
+t2-fan-control
+t2bce-audio-ucm
 t2bce-stack-dkms
-t2fanrd
+t2sbs-dkms
+t2smc-dkms
+t2smp-dkms
+t2thunderbolt-dkms
 
 # Framework 16
 qmk-hid
