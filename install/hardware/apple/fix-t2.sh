@@ -21,12 +21,6 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
-  # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
-  # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
-  # single-boot install that wiped macOS has no such volume, so the fetch comes
-  # up empty; those machines need the firmware supplied from a macOS copy or a
-  # downloaded recovery image instead.
-  #
   # The packages come from the signed [t2-arch-packages] repo
   # (install/hardware/pacman.sh). Its keyring goes first so the key is trusted
   # before anything from that repo is verified on later updates.
@@ -40,8 +34,42 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2thunderbolt-dkms \
     t2-fan-control \
     t2bce-audio-ucm \
-    t2-dkms-guard \
-    apple-bcm-firmware-fetcher
+    t2-dkms-guard
+
+  # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
+  # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
+  # single-boot install that wiped macOS has no such volume, so the fetch comes
+  # up empty; those machines need the firmware supplied from a macOS copy or a
+  # downloaded recovery image instead.
+  #
+  # It mounts that volume with the APFS driver, which linux-t2 builds in and
+  # linux-omarchy does not: linux-apfs-rw-dkms provides it. DKMS builds only at
+  # the end of a transaction, so the driver goes in first, on its own.
+  omarchy-pkg-add linux-apfs-rw-dkms
+  omarchy-pkg-add apple-bcm-firmware-fetcher
+
+  # The fetcher's own post-install run happens inside the installer's chroot,
+  # where modprobe works against the live ISO's kernel rather than the
+  # installed linux-omarchy, so it usually comes up empty there. This unit
+  # fetches on the installed system's boots until the fetcher records its files,
+  # before networking starts, then reloads brcmfmac to pick the firmware up.
+  cat > /etc/systemd/system/t2-wifi-firmware.service <<'EOF'
+[Unit]
+Description=Fetch the T2 Wi-Fi/Bluetooth firmware from the macOS volume
+ConditionPathExists=!/var/lib/apple-bcm-firmware-fetcher/installed-files
+After=local-fs.target
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/apple-bcm-firmware-fetcher
+ExecStartPost=-/bin/sh -c 'modprobe -r brcmfmac && modprobe brcmfmac'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl enable t2-wifi-firmware.service
 
   # t2-fan-control ships /etc/t2-fancontrol/config.txt with a system chill
   # target of 80 C: upstream's 45 C (average of system and GPU sensors) pins the
