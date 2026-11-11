@@ -29,6 +29,14 @@ else
 fi
 SH
 
+# A PC unless T2=1: then the T2 chip's PCI ID, among enough lines that a
+# reader quitting at the first match would cut lspci off.
+cat >"$stub_bin/lspci" <<'SH'
+#!/bin/bash
+[[ ${T2:-0} == "1" ]] && echo "02:00.1 Non-VGA unclassified device [0000]: Apple Inc. T2 Bridge Controller [106b:1801] (rev 01)"
+for i in $(seq 1 5000); do echo "00:00.0 Host bridge [0600]: Intel Corporation Device [8086:3e20] (rev 0d)"; done
+SH
+
 cat >"$stub_bin/sudo" <<'SH'
 #!/bin/bash
 printf 'sudo %s\n' "$*" >>"$TEST_LOG"
@@ -50,6 +58,11 @@ printf 'options hid_apple fnmode=0\n' >"$conf"
 run_fkeys 0
 [[ $(<"$conf") == "options hid_apple fnmode=0" ]] || fail "an existing hid_apple.conf is left alone"
 pass "an existing hid_apple.conf is left alone"
+
+rm -f "$conf"
+T2=1 run_fkeys 0
+[[ ! -e $conf ]] || fail "a T2 Mac keeps hid_apple's default mode" "$(cat "$conf")"
+pass "a T2 Mac keeps hid_apple's default mode, for Fn+arrows"
 
 rm -rf "$test_tmp/modprobe.d"
 : >"$calls"
