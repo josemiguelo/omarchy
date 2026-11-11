@@ -72,7 +72,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # where modprobe works against the live ISO's kernel rather than the
   # installed linux-omarchy, so it usually comes up empty there. This unit
   # fetches on the installed system's boots until the fetcher records its files,
-  # before networking starts, then reloads brcmfmac to pick the firmware up.
+  # before networking starts. The fetcher reloads the Wi-Fi and Bluetooth
+  # drivers itself once it has the files, the Wi-Fi driver's _wcc helper ahead
+  # of the driver it holds; removing the driver alone here failed with "in use".
   cat > /etc/systemd/system/t2-wifi-firmware.service <<'EOF'
 [Unit]
 Description=Fetch the T2 Wi-Fi/Bluetooth firmware from the macOS volume
@@ -84,7 +86,6 @@ Wants=network-pre.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/apple-bcm-firmware-fetcher
-ExecStartPost=-/bin/sh -c 'modprobe -r brcmfmac && modprobe brcmfmac'
 
 [Install]
 WantedBy=multi-user.target
