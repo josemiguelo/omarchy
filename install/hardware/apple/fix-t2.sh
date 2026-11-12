@@ -20,6 +20,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        stock btbcm drops these Macs' LE advertisements, so LE
   #                        keyboards and mice never show up or can't connect
   #   t2-fan-control       fan daemon on t2smc, replaces t2fanrd
+  #   t2-smc-control       SMC app and t2-smc-gaugingd, which lifts a battery charge
+  #                        limit for a full charge when the gauge needs one to
+  #                        recalibrate, as macOS does
   #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
   #   t2-dkms-guard        aborts a linux-omarchy upgrade whose headers cannot build
   #                        these modules, so an update never removes the keyboard
@@ -53,6 +56,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-precision-trackpad-dkms \
     t2-bluetooth-dkms \
     t2-fan-control \
+    t2-smc-control \
     t2bce-audio-ucm \
     t2-dkms-guard
 
@@ -142,6 +146,10 @@ EOF
   # target of 80 C: upstream's 45 C (average of system and GPU sensors) pins the
   # fans of dGPU models such as MacBookPro16,1 at full speed.
   systemctl enable t2-fancontrol.service
+
+  # With no charge limit set it never lifts anything; with one, it keeps the
+  # battery gauge calibrated.
+  systemctl enable t2-smc-gaugingd.service
 
   # The T2 keeps its internal devices on a USB bus t2bce_vhci exposes, and
   # beside the keyboard sits a CDC NCM network function, "Apple T2 Controller"
