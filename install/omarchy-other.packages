@@ -78,7 +78,7 @@ t2-smc-control
 t2-dsp
 bankstown-lv2
 t2bce-audio-ucm
-t2-bluetooth-dkms
+t2-wireless-dkms
 t2-precision-trackpad-dkms
 t2bce-stack-dkms
 t2sbs-dkms

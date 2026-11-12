@@ -16,9 +16,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #   t2-precision-trackpad-dkms
   #                        the internal trackpad's multitouch and Force Touch: stock
   #                        kernels drive it as a plain mouse (no scroll, no tap)
-  #   t2-bluetooth-dkms    btbcm/hci_uart/hci_bcm4377 with KaiT2en's Apple fixes:
-  #                        stock btbcm drops these Macs' LE advertisements, so LE
-  #                        keyboards and mice never show up or can't connect
+  #   t2-wireless-dkms     the Broadcom Wi-Fi driver and btbcm/hci_uart/hci_bcm4377
+  #                        with KaiT2en's Apple fixes: Wi-Fi resume (a firmware reload on wake),
+  #                        and Bluetooth LE devices (stock btbcm drops these Macs'
+  #                        LE advertisements, so LE keyboards and mice never show up)
   #   t2-fan-control       fan daemon on t2smc, replaces t2fanrd
   #   t2-smc-control       SMC app and t2-smc-gaugingd, which lifts a battery charge
   #                        limit for a full charge when the gauge needs one to
@@ -58,7 +59,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2smp-dkms \
     t2thunderbolt-dkms \
     t2-precision-trackpad-dkms \
-    t2-bluetooth-dkms \
+    t2-wireless-dkms \
     t2-fan-control \
     t2-smc-control \
     t2bce-audio-ucm \
