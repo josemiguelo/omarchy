@@ -143,6 +143,21 @@ EOF
   # fans of dGPU models such as MacBookPro16,1 at full speed.
   systemctl enable t2-fancontrol.service
 
+  # The T2 keeps its internal devices on a USB bus t2bce_vhci exposes, and
+  # beside the keyboard sits a CDC NCM network function, "Apple T2 Controller"
+  # (05ac:8233): macOS's link to the T2 chip. cdc_ncm makes it an Ethernet
+  # interface, and with no DHCP server on the T2, NetworkManager retries DHCP
+  # on it every 45 s. Matched by USB ID, not by driver: USB tethering from a
+  # phone is cdc_ncm too.
+  mkdir -p /etc/udev/rules.d
+  cat > /etc/udev/rules.d/90-t2-ibridge-unmanaged.rules <<'EOF'
+# Written by Omarchy's installer (fix-t2.sh): NetworkManager leaves the T2's
+# internal USB network link (Apple T2 Controller, 05ac:8233) alone. macOS talks
+# to the T2 chip over it; Linux has no use for it, and with no DHCP server on
+# the T2, NetworkManager would retry DHCP on it every 45 s.
+SUBSYSTEM=="net", ATTRS{idVendor}=="05ac", ATTRS{idProduct}=="8233", ENV{NM_UNMANAGED}="1"
+EOF
+
   mkdir -p /etc/modules-load.d
   {
     echo "t2bce_vhci"
