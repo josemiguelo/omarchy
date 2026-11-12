@@ -72,9 +72,54 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # where modprobe works against the live ISO's kernel rather than the
   # installed linux-omarchy, so it usually comes up empty there. This unit
   # fetches on the installed system's boots until the fetcher records its files,
-  # before networking starts. The fetcher reloads the Wi-Fi and Bluetooth
-  # drivers itself once it has the files, the Wi-Fi driver's _wcc helper ahead
-  # of the driver it holds; removing the driver alone here failed with "in use".
+  # before networking starts, then brings the Wi-Fi card up on them.
+  #
+  # The card's driver has already probed by then (udev loads it at coldplug)
+  # and failed for lack of firmware. Its pending firmware request holds the
+  # module for a few more seconds, until it gives up and unbinds the card, so
+  # the reload the fetcher runs right after copying can't remove it, ignores
+  # that, and the first boot has no Wi-Fi until a reboot. t2-wifi-reload waits
+  # that out and loads the driver again, which probes the card with its
+  # firmware in place. It finds the card by its PCI class and the driver by
+  # the card's modalias, removing whatever holds the driver (its _wcc helper)
+  # first; it fails the unit only when the card still has no interface.
+  mkdir -p /usr/local/sbin
+  cat > /usr/local/sbin/t2-wifi-reload <<'EOF'
+#!/bin/bash
+# Written by Omarchy's installer (fix-t2.sh) for t2-wifi-firmware.service.
+set -u
+
+card=""
+for dev in /sys/bus/pci/devices/*; do
+  [[ $(<"$dev/class") == 0x0280* ]] && { card=$dev; break; }
+done
+[[ -n $card ]] || exit 0
+
+up() { compgen -G "$card/net/*" >/dev/null; }
+up && exit 0
+
+driver=$(modprobe -R "$(<"$card/modalias")" 2>/dev/null | head -n1)
+[[ -n $driver ]] || { echo "no driver for the Wi-Fi card at $card" >&2; exit 1; }
+
+for _ in $(seq 30); do
+  [[ -d /sys/module/$driver ]] || break
+  for holder in /sys/module/"$driver"/holders/*; do
+    [[ -e $holder ]] && modprobe -r "${holder##*/}" 2>/dev/null
+  done
+  modprobe -r "$driver" 2>/dev/null && break
+  sleep 1
+done
+modprobe "$driver"
+
+for _ in $(seq 15); do
+  up && { echo "Wi-Fi card up on $driver"; exit 0; }
+  sleep 1
+done
+echo "the Wi-Fi card at $card has no interface after reloading $driver" >&2
+exit 1
+EOF
+  chmod 755 /usr/local/sbin/t2-wifi-reload
+
   cat > /etc/systemd/system/t2-wifi-firmware.service <<'EOF'
 [Unit]
 Description=Fetch the T2 Wi-Fi/Bluetooth firmware from the macOS volume
@@ -86,6 +131,7 @@ Wants=network-pre.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/apple-bcm-firmware-fetcher
+ExecStartPost=/usr/local/sbin/t2-wifi-reload
 
 [Install]
 WantedBy=multi-user.target
