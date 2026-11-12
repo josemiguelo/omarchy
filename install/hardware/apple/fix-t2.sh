@@ -24,6 +24,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        limit for a full charge when the gauge needs one to
   #                        recalibrate, as macOS does
   #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
+  #   t2-dsp               the speaker and microphone processing macOS applies to
+  #                        each model's internal speakers, as PipeWire filter chains
+  #                        (needs bankstown-lv2, from the same repo, and Arch's
+  #                        lsp-plugins-lv2); a udev rule names the card t2-<model>
   #   t2-dkms-guard        aborts a linux-omarchy upgrade whose headers cannot build
   #                        these modules, so an update never removes the keyboard
   #                        driver needed at the disk unlock prompt
@@ -58,6 +62,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-fan-control \
     t2-smc-control \
     t2bce-audio-ucm \
+    t2-dsp \
     t2-dkms-guard
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —

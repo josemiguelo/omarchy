@@ -74,6 +74,10 @@ linux-apfs-rw-dkms
 t2-arch-packages-keyring
 t2-dkms-guard
 t2-fan-control
+t2-smc-control
+t2-dsp
+bankstown-lv2
+lsp-plugins-lv2
 t2bce-audio-ucm
 t2-bluetooth-dkms
 t2-precision-trackpad-dkms
