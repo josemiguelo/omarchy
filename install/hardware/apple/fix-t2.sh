@@ -25,6 +25,11 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        limit for a full charge when the gauge needs one to
   #                        recalibrate, as macOS does
   #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
+  #   t2-trackpad-actuator-dkms, t2-force-click
+  #                        the trackpad's Taptic Engine (a haptic click on force
+  #                        click; a udev rule hands it its interface, which
+  #                        hid-apple binds first) and the app/daemon for click
+  #                        pressure and a force click action
   #   t2-dsp               the speaker and microphone processing macOS applies to
   #                        each model's internal speakers, as PipeWire filter chains
   #                        (needs bankstown-lv2, from the same repo, and Arch's
@@ -59,6 +64,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2smp-dkms \
     t2thunderbolt-dkms \
     t2-precision-trackpad-dkms \
+    t2-trackpad-actuator-dkms \
+    t2-force-click \
     t2-wireless-dkms \
     t2-fan-control \
     t2-smc-control \
@@ -156,6 +163,9 @@ EOF
   # With no charge limit set it never lifts anything; with one, it keeps the
   # battery gauge calibrated.
   systemctl enable t2-smc-gaugingd.service
+
+  # Applies the saved click pressure and force click settings at boot.
+  systemctl enable t2-force-click.service
 
   # The T2 keeps its internal devices on a USB bus t2bce_vhci exposes, and
   # beside the keyboard sits a CDC NCM network function, "Apple T2 Controller"

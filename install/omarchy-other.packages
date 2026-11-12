@@ -80,6 +80,8 @@ bankstown-lv2
 t2bce-audio-ucm
 t2-wireless-dkms
 t2-precision-trackpad-dkms
+t2-trackpad-actuator-dkms
+t2-force-click
 t2bce-stack-dkms
 t2sbs-dkms
 t2smc-dkms
