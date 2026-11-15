@@ -53,6 +53,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        bar: dark until touched or Fn, media and F-key layers,
   #                        swipes for volume and brightness, haptics, the Touch ID
   #                        prompt
+  #   t2-kbd-backlight     fades the keyboard backlight out after 30 s without
+  #                        input and back on the next (through UPower), and puts
+  #                        it back before suspend so the keyboard resumes lit
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -90,7 +93,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-dkms-guard \
     t2-touchid \
     t2-touchbar-dkms \
-    t2-touchbar
+    t2-touchbar \
+    t2-kbd-backlight
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
@@ -259,6 +263,9 @@ EOF
       echo t2-touchbar >>/var/lib/omarchy/provisioning/groups
   fi
   systemctl --global enable t2-touchbar.service
+
+  # Fades the keyboard backlight while idle, the login screen included.
+  systemctl enable t2-kbd-backlight.service
 
   # pci=noaer: Apple firmware denies AER, and Linux using it anyway stalls
   # resume for seconds. pcie_ports=compat: no native PCIe port services on the

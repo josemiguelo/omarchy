@@ -76,6 +76,7 @@ t2-dkms-guard
 t2-touchid
 t2-touchbar-dkms
 t2-touchbar
+t2-kbd-backlight
 libfprint-git
 fprintd
 t2-fan-control
