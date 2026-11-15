@@ -39,12 +39,11 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        driver needed at the disk unlock prompt
   #   t2-touchid           Touch ID through fprintd: the T2's Secure Enclave matches
   #                        the finger (enrolled in macOS) and the daemon hands fprintd
-  #                        the verdict through libfprint's virtual storage driver,
-  #                        which libfprint-git builds (named here so fprintd doesn't
-  #                        pull Arch's libfprint, which conflicts with it). A udev
-  #                        rule brings the T2's internal link up as it appears. It
-  #                        stays off until turned on: T2_TOUCHID_BIND_USER in
-  #                        /etc/t2-touchid.conf, then Omarchy's fingerprint PAM.
+  #                        the verdict through libfprint's virtual storage driver. A
+  #                        udev rule brings the T2's internal link up as it appears.
+  #                        Omarchy's fingerprint setup turns it on, as on any laptop
+  #                        with a reader, installing libfprint-git and fprintd
+  #                        (offline from the ISO's package list).
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -80,8 +79,6 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2bce-audio-ucm \
     t2-dsp \
     t2-dkms-guard \
-    libfprint-git \
-    fprintd \
     t2-touchid
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
@@ -177,6 +174,13 @@ EOF
 
   # Applies the saved click pressure and force click settings at boot.
   systemctl enable t2-force-click.service
+
+  # Touch ID: the daemon keeps a session with the T2's Secure Enclave and tells
+  # Omarchy's fingerprint detection the reader is ready (the package's
+  # /usr/share/omarchy-platform/fingerprint-readers), so the fingerprint setup
+  # and its first-run invitation find it. Nothing is bound or in PAM until that
+  # setup runs: its enroll step binds the finger enrolled in macOS.
+  systemctl enable t2-touchid.service
 
   # The T2 keeps its internal devices on a USB bus t2bce_vhci exposes, and
   # beside the keyboard sits a CDC NCM network function, "Apple T2 Controller"
