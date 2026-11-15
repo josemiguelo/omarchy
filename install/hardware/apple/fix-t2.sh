@@ -37,6 +37,14 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #   t2-dkms-guard        aborts a linux-omarchy upgrade whose headers cannot build
   #                        these modules, so an update never removes the keyboard
   #                        driver needed at the disk unlock prompt
+  #   t2-touchid           Touch ID through fprintd: the T2's Secure Enclave matches
+  #                        the finger (enrolled in macOS) and the daemon hands fprintd
+  #                        the verdict through libfprint's virtual storage driver,
+  #                        which libfprint-git builds (named here so fprintd doesn't
+  #                        pull Arch's libfprint, which conflicts with it). A udev
+  #                        rule brings the T2's internal link up as it appears. It
+  #                        stays off until turned on: T2_TOUCHID_BIND_USER in
+  #                        /etc/t2-touchid.conf, then Omarchy's fingerprint PAM.
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -71,7 +79,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-smc-control \
     t2bce-audio-ucm \
     t2-dsp \
-    t2-dkms-guard
+    t2-dkms-guard \
+    libfprint-git \
+    fprintd \
+    t2-touchid
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A

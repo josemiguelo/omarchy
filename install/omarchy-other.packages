@@ -73,6 +73,9 @@ apple-bcm-firmware-fetcher
 linux-apfs-rw-dkms
 t2-arch-packages-keyring
 t2-dkms-guard
+t2-touchid
+libfprint-git
+fprintd
 t2-fan-control
 t2-smc-control
 t2-dsp
