@@ -44,6 +44,15 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        Omarchy's fingerprint setup turns it on, as on any laptop
   #                        with a reader, installing libfprint-git and fprintd
   #                        (offline from the ISO's package list).
+  #   t2-touchbar-dkms, t2-touchbar
+  #                        the internal keyboard on t2hid (a hid-apple fork with
+  #                        the same options, which leaves the trackpad's mouse and
+  #                        actuator interfaces alone), the Touch Bar on
+  #                        t2touchbar_kbd/_bl and t2bdrm (its screen as a DRM
+  #                        device on a private seat), and the daemon drawing the
+  #                        bar: dark until touched or Fn, media and F-key layers,
+  #                        swipes for volume and brightness, haptics, the Touch ID
+  #                        prompt
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -79,7 +88,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2bce-audio-ucm \
     t2-dsp \
     t2-dkms-guard \
-    t2-touchid
+    t2-touchid \
+    t2-touchbar-dkms \
+    t2-touchbar
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
@@ -207,13 +218,47 @@ EOF
   # off; mkinitcpio pulls t2bce_core/t2bce_dma in via module dependencies. It
   # must be in the initramfs to type the disk encryption password.
   # t2_precision_trackpad goes first: it must be registered when t2bce_vhci
-  # enumerates the trackpad, or hid-apple takes its mouse interface. It claims
-  # only that interface, so hid-apple keeps the keyboard.
+  # enumerates the trackpad, to take its mouse interface. t2hid, the keyboard
+  # driver, must be here for the password prompt; hid-apple is blacklisted
+  # below, and modconf carries that blacklist into the image.
   # t2smc before t2sbs, so BAT0 already has charge_control_end_threshold when
   # udev and UPower first see it.
   mkdir -p /etc/mkinitcpio.conf.d
-  echo "MODULES+=(t2_precision_trackpad t2bce_vhci usbhid hid_apple hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
+  echo "MODULES+=(t2_precision_trackpad t2bce_vhci usbhid t2hid hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
     /etc/mkinitcpio.conf.d/apple-t2.conf
+
+  # The keyboard and Touch Bar on t2-touchbar-dkms. The package installs its
+  # drivers inert (/usr/lib/modprobe.d/t2-touchbar.conf blacklists them, since
+  # they claim the same devices as hid-apple and the in-kernel Touch Bar
+  # drivers); this file of the same name takes its place and blacklists those
+  # instead. hid_apple's options don't reach t2hid: T2 keyboards keep the
+  # default fnmode (3, which keeps Fn+arrows and Fn+Backspace), as
+  # fix-fkeys.sh leaves them.
+  mkdir -p /etc/modprobe.d
+  cat > /etc/modprobe.d/t2-touchbar.conf <<'EOF'
+# Omarchy (fix-t2.sh): the internal keyboard and Touch Bar on t2hid,
+# t2touchbar_kbd/_bl and t2bdrm (t2-touchbar-dkms), in place of the in-kernel
+# drivers. Takes the place of the package's file of the same name in
+# /usr/lib/modprobe.d, which keeps them off.
+blacklist hid_apple
+blacklist hid_appletb_kbd
+blacklist hid_appletb_bl
+blacklist appletbdrm
+EOF
+
+  # The Touch Bar daemon runs in the user's session: its group opens the bar's
+  # screen and digitizer, the keyboard's event node (for Fn), uinput and the
+  # bar's light. A user created at first boot gets it from the provisioning
+  # record. Enabled globally, the user service also lets t2-touchbar-attach
+  # switch the bar from Apple's firmware row to its screen at boot.
+  if [[ -n ${OMARCHY_INSTALL_USER:-} ]]; then
+    usermod -aG t2-touchbar "$OMARCHY_INSTALL_USER"
+  else
+    mkdir -p /var/lib/omarchy/provisioning
+    grep -qx t2-touchbar /var/lib/omarchy/provisioning/groups 2>/dev/null ||
+      echo t2-touchbar >>/var/lib/omarchy/provisioning/groups
+  fi
+  systemctl --global enable t2-touchbar.service
 
   # pci=noaer: Apple firmware denies AER, and Linux using it anyway stalls
   # resume for seconds. pcie_ports=compat: no native PCIe port services on the

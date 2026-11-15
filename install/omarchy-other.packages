@@ -74,6 +74,8 @@ linux-apfs-rw-dkms
 t2-arch-packages-keyring
 t2-dkms-guard
 t2-touchid
+t2-touchbar-dkms
+t2-touchbar
 libfprint-git
 fprintd
 t2-fan-control
