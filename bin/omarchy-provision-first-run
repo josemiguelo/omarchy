@@ -91,9 +91,9 @@ omarchy-notification-wait || log_first_run "Timed out waiting for notification s
 run_first_run_step "configure Superwhisper dictation" \
   bash "$OMARCHY_PATH/install/user/first-run/superwhisper.sh"
 
-# T2 Macs: the Sidecar panel on the bar, also through the shell.
-run_first_run_step "put the T2 Sidecar panel on the bar" \
-  bash "$OMARCHY_PATH/install/user/first-run/t2-sidecar.sh"
+# T2 Macs: the T2 packages' bar plugins and menu entries, also through the shell.
+run_first_run_step "put the T2 panels on the bar" \
+  bash "$OMARCHY_PATH/install/user/first-run/t2-omarchy.sh"
 # Each send returns only once the server has taken the toast, so sending in
 # order is enough to stack them newest-on-top.
 run_first_run_step "show welcome notification" \
