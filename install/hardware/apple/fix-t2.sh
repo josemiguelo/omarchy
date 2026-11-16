@@ -70,6 +70,18 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        the Mac's own tables, so it stops loading sub-tables
   #                        twice (AE_ALREADY_EXISTS at every boot, CPU _OSC/_PDC
   #                        aborted); run once on the first boot, below
+  # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics:
+  #   t2gmux-dkms, t2-amdgpu-dkms, t2-i915-dkms
+  #                        KaiT2en's gmux driver (in place of apple_gmux),
+  #                        amdgpu with its GMUX runtime PM (the dGPU off in
+  #                        D3cold until an app asks for it) and i915 for the
+  #                        panel on the iGPU (with a fix that power cycles the
+  #                        panel after a wake, which stays dark otherwise)
+  #   t2-boot-gpu          sets and keeps Apple's boot GPU variable
+  #                        (`t2-boot-gpu integrated` is hybrid mode)
+  #                        These only make hybrid mode possible: the boot GPU is
+  #                        left as it is (the dGPU); the owner's setup switches
+  #                        it (the dotfiles' t2-hybrid-boot)
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -113,6 +125,22 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-airshare \
     t2-truetone \
     t2-acpi-fix
+
+  # Hybrid graphics needs both GPUs (by PCI class from sysfs: config space reads
+  # would wake a dGPU in D3cold). The drivers build now, offline; the boot GPU
+  # stays the dGPU until `t2-boot-gpu integrated`.
+  t2_igpu=0 t2_dgpu=0
+  for t2_dev in /sys/bus/pci/devices/*; do
+    [[ $(<"$t2_dev/class") == 0x0300* ]] || continue
+    case $(<"$t2_dev/vendor") in
+    0x8086) t2_igpu=1 ;;
+    0x1002) t2_dgpu=1 ;;
+    esac
+  done
+  if (( t2_igpu && t2_dgpu )); then
+    omarchy-pkg-add t2gmux-dkms t2-amdgpu-dkms t2-i915-dkms t2-boot-gpu
+  fi
+  unset t2_igpu t2_dgpu t2_dev
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A

@@ -81,6 +81,10 @@ t2-drop
 t2-airshare
 t2-truetone
 t2-acpi-fix
+t2gmux-dkms
+t2-amdgpu-dkms
+t2-i915-dkms
+t2-boot-gpu
 libfprint-git
 fprintd
 t2-fan-control
