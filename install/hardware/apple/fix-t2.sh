@@ -66,6 +66,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        under the night light's colour matrix) and its
   #                        brightness follows macOS's curve, learning from the
   #                        brightness keys
+  #   t2-acpi-fix          builds an override of the firmware's CPU table from
+  #                        the Mac's own tables, so it stops loading sub-tables
+  #                        twice (AE_ALREADY_EXISTS at every boot, CPU _OSC/_PDC
+  #                        aborted); run once on the first boot, below
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -107,7 +111,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-kbd-backlight \
     t2-drop \
     t2-airshare \
-    t2-truetone
+    t2-truetone \
+    t2-acpi-fix
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
@@ -190,6 +195,34 @@ ExecStartPost=/usr/local/sbin/t2-wifi-reload
 WantedBy=multi-user.target
 EOF
   systemctl enable t2-wifi-firmware.service
+
+  # The ACPI override is built from the running Mac's tables and only for an
+  # error that boot's kernel log shows, so it can't be made in the installer's
+  # chroot. This unit makes it on the first boot, before the login screen:
+  # t2-acpi-fix writes /etc/initcpio/acpi_override/*.aml and the mkinitcpio
+  # drop-in that adds the acpi_override hook, the boot image is rebuilt with
+  # it, and it applies from the next boot. It runs once (a failure retries on
+  # the next boot); after a firmware update, run `t2-acpi-fix` again by hand.
+  # Undo: remove the .aml and /etc/mkinitcpio.conf.d/zz-t2-acpi-fix.conf, then
+  # `limine-mkinitcpio`.
+  cat > /etc/systemd/system/t2-acpi-fix.service <<'EOF'
+[Unit]
+Description=Build the T2 ACPI table override from this Mac's tables
+ConditionPathExists=!/var/lib/t2-acpi-fix/done
+After=local-fs.target systemd-journald.service
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/t2-acpi-fix
+ExecStartPost=/bin/sh -c 'if [ -e /etc/mkinitcpio.conf.d/zz-t2-acpi-fix.conf ]; then limine-mkinitcpio; fi'
+ExecStartPost=/bin/sh -c 'mkdir -p /var/lib/t2-acpi-fix && touch /var/lib/t2-acpi-fix/done'
+TimeoutStartSec=10min
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl enable t2-acpi-fix.service
 
   # t2-fan-control ships /etc/t2-fancontrol/config.txt with a system chill
   # target of 80 C: upstream's 45 C (average of system and GPU sensors) pins the

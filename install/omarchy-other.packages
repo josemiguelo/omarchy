@@ -80,6 +80,7 @@ t2-kbd-backlight
 t2-drop
 t2-airshare
 t2-truetone
+t2-acpi-fix
 libfprint-git
 fprintd
 t2-fan-control
