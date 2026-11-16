@@ -61,6 +61,11 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        app and a receiver the app's "visible" switch starts,
   #                        which also makes the Mac discoverable over Bluetooth,
   #                        so it stays off until the owner turns it on
+  #   t2-truetone          the ambient light sensor at work: the panel's white
+  #                        follows the room's light (True Tone, a gamma table
+  #                        under the night light's colour matrix) and its
+  #                        brightness follows macOS's curve, learning from the
+  #                        brightness keys
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
@@ -101,7 +106,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-touchbar \
     t2-kbd-backlight \
     t2-drop \
-    t2-airshare
+    t2-airshare \
+    t2-truetone
 
   # apple-bcm-firmware-fetcher reads its firmware off an on-disk macOS volume —
   # Wi-Fi firmware for T2 Macs is only legally obtainable from there. A
@@ -273,6 +279,10 @@ EOF
 
   # Fades the keyboard backlight while idle, the login screen included.
   systemctl enable t2-kbd-backlight.service
+
+  # True Tone and automatic brightness, a user service in every graphical
+  # session; its settings are ~/.config/t2-truetone/config.toml.
+  systemctl --global enable t2-truetone.service
 
   # The firewall lets transfers in (install/config/firewall.sh denies incoming):
   # Quick Share on its port (fixed by the t2-airshare package), the hotspot it

@@ -79,6 +79,7 @@ t2-touchbar
 t2-kbd-backlight
 t2-drop
 t2-airshare
+t2-truetone
 libfprint-git
 fprintd
 t2-fan-control
