@@ -12,7 +12,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #   t2sbs-dkms           battery percentage relative to full, not design capacity
   #   t2smp-dkms           offlines secondary CPUs around suspend; the early-resume
   #                        CPU bring-up otherwise takes seconds per CPU
-  #   t2thunderbolt-dkms   Thunderbolt PM ordering (NHI before tunnelled ports)
+  #   t2-thunderbolt-dkms  the thunderbolt driver with Apple RTD3: the idle Titan
+  #                        Ridge controllers power off (deeper package C-states),
+  #                        plus the PM ordering (NHI before tunnelled ports)
   #   t2-precision-trackpad-dkms
   #                        the internal trackpad's multitouch and Force Touch: stock
   #                        kernels drive it as a plain mouse (no scroll, no tap)
@@ -113,7 +115,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2smc-dkms \
     t2sbs-dkms \
     t2smp-dkms \
-    t2thunderbolt-dkms \
+    t2-thunderbolt-dkms \
     t2-precision-trackpad-dkms \
     t2-trackpad-actuator-dkms \
     t2-force-click \

@@ -102,7 +102,7 @@ t2bce-stack-dkms
 t2sbs-dkms
 t2smc-dkms
 t2smp-dkms
-t2thunderbolt-dkms
+t2-thunderbolt-dkms
 
 # Framework 16
 qmk-hid
