@@ -5,7 +5,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
 
   # T2 Macs run the stock linux-omarchy kernel with KaiT2en's T2 drivers built
   # by DKMS, instead of linux-t2. KaiT2en (https://github.com/kaiT2en/KaiT2en-Fedora)
-  # targets stock kernels; its drivers replace the in-tree Apple ones:
+  # targets stock kernels; its drivers replace the in-tree Apple ones. They
+  # come as one meta-package, t2-mac (and t2-mac-hybrid on dual-GPU models),
+  # so a T2 package added later reaches installed Macs with the next update;
+  # what t2-mac pulls in:
   #   t2bce-stack-dkms     BCE bus: internal keyboard/trackpad (t2bce_vhci), audio
   #   t2smc-dkms           SMC: fans, charge limit, sensors (applesmc cannot reach
   #                        the T2 SMC on a stock kernel)
@@ -85,7 +88,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        Sidecar encoder: `t2-sidecar on|mirror|off`; needs
   #                        t2-ave on; sunshine-t2 is Sunshine with the V4L2
   #                        encoder (in place of Omarchy's sunshine)
-  # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics:
+  #   apple-bcm-firmware-fetcher, linux-apfs-rw-dkms
+  #                        the Wi-Fi/Bluetooth firmware from macOS (below)
+  # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics,
+  # t2-mac-hybrid:
   #   t2gmux-dkms, t2-amdgpu-dkms, t2-i915-dkms
   #                        KaiT2en's gmux driver (in place of apple_gmux),
   #                        amdgpu with its GMUX runtime PM (the dGPU off in
@@ -116,35 +122,11 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   else
     omarchy-pkg-add t2-arch-packages-keyring
   fi
-  omarchy-pkg-add \
-    linux-omarchy-headers \
-    t2bce-stack-dkms \
-    t2smc-dkms \
-    t2sbs-dkms \
-    t2smp-dkms \
-    t2-thunderbolt-dkms \
-    t2-precision-trackpad-dkms \
-    t2-trackpad-actuator-dkms \
-    t2-force-click \
-    t2-wireless-dkms \
-    t2-fan-control \
-    t2-smc-control \
-    t2bce-audio-ucm \
-    t2-dsp \
-    t2-dkms-guard \
-    t2-touchid \
-    t2-touchbar-dkms \
-    t2-touchbar \
-    t2-kbd-backlight \
-    t2-drop \
-    t2-airshare \
-    t2-truetone \
-    t2-acpi-fix \
-    t2-journal \
-    t2-ave \
-    t2-kernel-args \
-    sunshine-t2 \
-    t2-sidecar
+  # The APFS driver first, in a transaction of its own: DKMS builds at the end
+  # of a transaction, and apple-bcm-firmware-fetcher (in t2-mac) mounts the
+  # macOS volume with it (below).
+  omarchy-pkg-add linux-apfs-rw-dkms
+  omarchy-pkg-add t2-mac
 
   # Hybrid graphics needs both GPUs (by PCI class from sysfs: config space reads
   # would wake a dGPU in D3cold). The drivers build now, offline; the boot GPU
@@ -158,7 +140,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     esac
   done
   if (( t2_igpu && t2_dgpu )); then
-    omarchy-pkg-add t2gmux-dkms t2-amdgpu-dkms t2-i915-dkms t2-boot-gpu
+    omarchy-pkg-add t2-mac-hybrid
   fi
   unset t2_igpu t2_dgpu t2_dev
 
@@ -169,10 +151,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # downloaded recovery image instead.
   #
   # It mounts that volume with the APFS driver, which linux-t2 builds in and
-  # linux-omarchy does not: Arch's linux-apfs-rw-dkms (extra) provides it. DKMS builds only at
-  # the end of a transaction, so the driver goes in first, on its own.
-  omarchy-pkg-add linux-apfs-rw-dkms
-  omarchy-pkg-add apple-bcm-firmware-fetcher
+  # linux-omarchy does not: Arch's linux-apfs-rw-dkms (extra) provides it,
+  # installed on its own before t2-mac (above).
 
   # The fetcher's own post-install run happens inside the installer's chroot,
   # where modprobe works against the live ISO's kernel rather than the

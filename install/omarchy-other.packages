@@ -86,6 +86,8 @@ t2-ave
 t2-kernel-args
 sunshine-t2
 t2-sidecar
+t2-mac
+t2-mac-hybrid
 t2gmux-dkms
 t2-amdgpu-dkms
 t2-i915-dkms
