@@ -84,6 +84,8 @@ t2-acpi-fix
 t2-journal
 t2-ave
 t2-kernel-args
+sunshine-t2
+t2-sidecar
 t2gmux-dkms
 t2-amdgpu-dkms
 t2-i915-dkms

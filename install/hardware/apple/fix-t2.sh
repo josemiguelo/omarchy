@@ -79,6 +79,12 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        devices (ffmpeg's hevc_v4l2m2m/h264_v4l2m2m) through a
   #                        root daemon; installed but off: `systemctl enable --now
   #                        t2-ave.service t2-ave-suspend.service`
+  #   t2-sidecar, sunshine-t2
+  #                        a phone or tablet as a second screen (or a view of
+  #                        this one) through Moonlight, encoded by the T2's
+  #                        Sidecar encoder: `t2-sidecar on|mirror|off`; needs
+  #                        t2-ave on; sunshine-t2 is Sunshine with the V4L2
+  #                        encoder (in place of Omarchy's sunshine)
   # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics:
   #   t2gmux-dkms, t2-amdgpu-dkms, t2-i915-dkms
   #                        KaiT2en's gmux driver (in place of apple_gmux),
@@ -136,7 +142,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-acpi-fix \
     t2-journal \
     t2-ave \
-    t2-kernel-args
+    t2-kernel-args \
+    sunshine-t2 \
+    t2-sidecar
 
   # Hybrid graphics needs both GPUs (by PCI class from sysfs: config space reads
   # would wake a dGPU in D3cold). The drivers build now, offline; the boot GPU
@@ -365,6 +373,20 @@ EOF
   ufw allow 47901/tcp comment 't2-airshare quick share'
   ufw allow in on t2qs0 comment 't2-airshare hotspot'
   ufw allow in on awdl0 to any port 8770 proto tcp comment 't2-drop airdrop'
+
+  # t2-sidecar's Sunshine, for Moonlight, from the private networks only:
+  # Omarchy's own ports and networks (omarchy-install-service-sunshine), so
+  # omarchy-remove-service-sunshine closes these too. TCP: pairing, app list,
+  # RTSP; UDP: mDNS (Moonlight finds the Mac by itself), video, control, audio.
+  for t2_net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16; do
+    for t2_port in 47984 47989 48010; do
+      ufw allow in proto tcp from "$t2_net" to any port "$t2_port" comment 't2-sidecar'
+    done
+    for t2_port in 5353 47998 47999 48000 48002 48010; do
+      ufw allow in proto udp from "$t2_net" to any port "$t2_port" comment 't2-sidecar'
+    done
+  done
+  unset t2_net t2_port
 
   # The kernel arguments (/etc/limine-entry-tool.d/t2-mac.conf) are
   # t2-kernel-args': pci=noaer and pcie_ports=compat (with t2smp, a ~1 s wake
