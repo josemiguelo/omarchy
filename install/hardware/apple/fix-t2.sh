@@ -70,6 +70,12 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        the Mac's own tables, so it stops loading sub-tables
   #                        twice (AE_ALREADY_EXISTS at every boot, CPU _OSC/_PDC
   #                        aborted); run once on the first boot, below
+  #   t2-journal           the T2's own logs (bridgeOS) merged with the Linux
+  #                        journal: `t2journal -b`, for debugging the T2 side
+  #   t2-ave               the T2's HEVC and Sidecar video encoders as V4L2
+  #                        devices (ffmpeg's hevc_v4l2m2m/h264_v4l2m2m) through a
+  #                        root daemon; installed but off: `systemctl enable --now
+  #                        t2-ave.service t2-ave-suspend.service`
   # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics:
   #   t2gmux-dkms, t2-amdgpu-dkms, t2-i915-dkms
   #                        KaiT2en's gmux driver (in place of apple_gmux),
@@ -124,7 +130,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
     t2-drop \
     t2-airshare \
     t2-truetone \
-    t2-acpi-fix
+    t2-acpi-fix \
+    t2-journal \
+    t2-ave
 
   # Hybrid graphics needs both GPUs (by PCI class from sysfs: config space reads
   # would wake a dGPU in D3cold). The drivers build now, offline; the boot GPU
