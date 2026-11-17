@@ -93,8 +93,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        t2-ave on; sunshine-t2 is Sunshine with the V4L2
   #                        encoder (in place of Omarchy's sunshine)
   #   t2-omarchy-plugins   the T2 panel on the bar: one icon, a tab per feature
-  #                        above (Battery, Fans, Trackpad, Ambient Light,
-  #                        AirShare, Sidecar); put in place at first login
+  #                        above (Battery, Fans, Graphics, Trackpad, Ambient
+  #                        Light, AirShare, Sidecar); put in place at first login
   #                        (install/user/first-run/t2-omarchy.sh)
   #   apple-bcm-firmware-fetcher, linux-apfs-rw-dkms
   #                        the Wi-Fi/Bluetooth firmware from macOS (below)
@@ -112,8 +112,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #   t2-gmux-backlight    the panel's brightness kept across suspend, blanks and
   #                        logins (the gmux resets it as the panel powers up)
   #                        These only make hybrid mode possible: the boot GPU is
-  #                        left as it is (the dGPU); the owner's setup switches
-  #                        it (the dotfiles' t2-hybrid-boot)
+  #                        left as it is (the dGPU); the T2 panel's Graphics tab
+  #                        switches it (the owner's setup picks Hybrid once)
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
   # installed alongside: it carries its own t2bce for the same PCI device.
   #
