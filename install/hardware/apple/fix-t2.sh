@@ -84,8 +84,8 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        journal: `t2journal -b`, for debugging the T2 side
   #   t2-ave               the T2's HEVC and Sidecar video encoders as V4L2
   #                        devices (ffmpeg's hevc_v4l2m2m/h264_v4l2m2m) through a
-  #                        root daemon; installed but off: `systemctl enable --now
-  #                        t2-ave.service t2-ave-suspend.service`
+  #                        root daemon (t2-ave.service, enabled below, with
+  #                        t2-ave-suspend.service closing its sessions around sleep)
   #   t2-sidecar, sunshine-t2
   #                        a phone or tablet as a second screen (or a view of
   #                        this one) through Moonlight, encoded by the T2's
@@ -152,6 +152,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   done
   if (( t2_igpu && t2_dgpu )); then
     omarchy-pkg-add t2-mac-hybrid
+    # Puts the boot GPU chosen in the T2 panel's Graphics tab back at every
+    # boot (macOS resets it at each of its own); with nothing chosen it does
+    # nothing.
+    systemctl enable t2-boot-gpu.service
   fi
   unset t2_igpu t2_dgpu t2_dev
 
@@ -272,6 +276,11 @@ EOF
   # battery gauge calibrated.
   systemctl enable t2-smc-gaugingd.service
 
+  # Writes the charge limit in /etc/t2-charge-limit.conf (LIMIT=<percent>) to
+  # the SMC at every boot, since macOS may change it; with no such file it
+  # doesn't run.
+  systemctl enable t2-charge-limit.service
+
   # Applies the saved click pressure and force click settings at boot.
   systemctl enable t2-force-click.service
 
@@ -342,9 +351,22 @@ EOF
   # Fades the keyboard backlight while idle, the login screen included.
   systemctl enable t2-kbd-backlight.service
 
+  # The T2's video encoders (HEVC, and the Sidecar encoder t2-sidecar streams
+  # through), with their sessions closed around sleep.
+  systemctl enable t2-ave.service t2-ave-suspend.service
+
   # True Tone and automatic brightness, a user service in every graphical
   # session; its settings are ~/.config/t2-truetone/config.toml.
   systemctl --global enable t2-truetone.service
+
+  # config/firewall.sh ran before this step and already set ufw's ENABLED=yes
+  # for the installed system: with it on, `ufw allow` also loads each rule into
+  # the running firewall, which in the installer is the live system's and
+  # fails ("ERROR: problem running"), stopping the install. Switch it off while
+  # the rules are added, so they're only saved, and put it back after: they
+  # load at the first boot with the rest.
+  t2_ufw_enabled=$(sed -n 's/^ENABLED=//p' /etc/ufw/ufw.conf)
+  sed -i 's/^ENABLED=.*/ENABLED=no/' /etc/ufw/ufw.conf
 
   # The firewall lets transfers in (install/config/firewall.sh denies incoming):
   # Quick Share on its port (fixed by the t2-airshare package), the hotspot it
@@ -368,6 +390,9 @@ EOF
     done
   done
   unset t2_net t2_port
+
+  sed -i "s/^ENABLED=.*/ENABLED=${t2_ufw_enabled:-yes}/" /etc/ufw/ufw.conf
+  unset t2_ufw_enabled
 
   # The kernel arguments (/etc/limine-entry-tool.d/t2-mac.conf) are
   # t2-kernel-args': pci=noaer and pcie_ports=compat (with t2smp, a ~1 s wake
