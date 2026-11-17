@@ -25,16 +25,19 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        with KaiT2en's Apple fixes: Wi-Fi resume (a firmware reload on wake),
   #                        and Bluetooth LE devices (stock btbcm drops these Macs'
   #                        LE advertisements, so LE keyboards and mice never show up)
-  #   t2-fan-control       fan daemon on t2smc, replaces t2fanrd
-  #   t2-smc-control       SMC app and t2-smc-gaugingd, which lifts a battery charge
+  #   t2-fan-control       fan daemon on t2smc, replaces t2fanrd (the T2 panel's
+  #                        Fans tab)
+  #   t2-smc-control       the T2 panel's Battery tab and t2-smc-gaugingd, which
+  #                        lifts a battery charge
   #                        limit for a full charge when the gauge needs one to
   #                        recalibrate, as macOS does
   #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
   #   t2-trackpad-actuator-dkms, t2-force-click
   #                        the trackpad's Taptic Engine (a haptic click on force
   #                        click; a udev rule hands it its interface, which
-  #                        hid-apple binds first) and the app/daemon for click
-  #                        pressure and a force click action
+  #                        hid-apple binds first) and the daemon for click
+  #                        pressure and a force click action (the T2 panel's
+  #                        Trackpad tab)
   #   t2-dsp               the speaker and microphone processing macOS applies to
   #                        each model's internal speakers, as PipeWire filter chains
   #                        (needs bankstown-lv2, from the same repo, and Arch's
@@ -62,10 +65,11 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        input and back on the next (through UPower), and puts
   #                        it back before suspend so the keyboard resumes lit
   #   t2-drop, t2-airshare AirDrop with Apple devices (over AWDL, from the Wi-Fi
-  #                        patches above) and Quick Share with Android phones: an
-  #                        app and a receiver the app's "visible" switch starts,
-  #                        which also makes the Mac discoverable over Bluetooth,
-  #                        so it stays off until the owner turns it on
+  #                        patches above) and Quick Share with Android phones:
+  #                        sending and a receiver from the T2 panel's AirShare
+  #                        tab, whose "visible" switch starts the receiver and
+  #                        makes the Mac discoverable over Bluetooth, so it stays
+  #                        off until the owner turns it on
   #   t2-truetone          the ambient light sensor at work: the panel's white
   #                        follows the room's light (True Tone, a gamma table
   #                        under the night light's colour matrix) and its
@@ -88,6 +92,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        Sidecar encoder: `t2-sidecar on|mirror|off`; needs
   #                        t2-ave on; sunshine-t2 is Sunshine with the V4L2
   #                        encoder (in place of Omarchy's sunshine)
+  #   t2-omarchy-plugins   the T2 panel on the bar: one icon, a tab per feature
+  #                        above (Battery, Fans, Trackpad, Ambient Light,
+  #                        AirShare, Sidecar); put in place at first login
+  #                        (install/user/first-run/t2-omarchy.sh)
   #   apple-bcm-firmware-fetcher, linux-apfs-rw-dkms
   #                        the Wi-Fi/Bluetooth firmware from macOS (below)
   # Dual-GPU models only (MacBookPro15,1/15,3/16,1/16,4), for hybrid graphics,
@@ -99,7 +107,10 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        panel on the iGPU (with a fix that power cycles the
   #                        panel after a wake, which stays dark otherwise)
   #   t2-boot-gpu          sets and keeps Apple's boot GPU variable
-  #                        (`t2-boot-gpu integrated` is hybrid mode)
+  #                        (`t2-boot-gpu integrated` is hybrid mode); Hyprland
+  #                        renders on the panel's GPU (a uwsm env snippet)
+  #   t2-gmux-backlight    the panel's brightness kept across suspend, blanks and
+  #                        logins (the gmux resets it as the panel powers up)
   #                        These only make hybrid mode possible: the boot GPU is
   #                        left as it is (the dGPU); the owner's setup switches
   #                        it (the dotfiles' t2-hybrid-boot)
