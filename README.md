@@ -4,6 +4,30 @@ Omarchy is a beautiful, fun & agentic Linux distribution by DHH.
 
 Read more at [omarchy.org](https://omarchy.org).
 
+## This fork: Omarchy for T2 Macs
+
+This is Omarchy's installer with different support for Intel Macs that have
+Apple's T2 chip. Upstream installs `linux-t2`, a patched kernel; this fork keeps
+Omarchy's stock `linux-omarchy` and installs the T2 drivers and apps from
+[KaiT2en](https://github.com/kaiT2en/KaiT2en-Fedora), packaged in
+[t2-arch-packages](https://github.com/josemiguelo/t2-arch-packages): Touch ID,
+the Touch Bar, Force Touch, AirDrop and Quick Share, hybrid graphics, True Tone,
+the macOS speaker sound, a 1-second wake from sleep, and a T2 panel on the bar.
+
+- **What it does and what works:** the
+  [t2-arch-packages README](https://github.com/josemiguelo/t2-arch-packages#readme).
+- **How to install:** build the ISO with the
+  [omarchy-iso fork](https://github.com/josemiguelo/omarchy-iso/tree/t2-kait2en)
+  from this branch (`t2-kait2en-stable`, Omarchy's stable release plus the T2
+  changes); the steps are in that README.
+- **The T2 changes:** `install/hardware/apple/fix-t2.sh` (packages, boot setup,
+  services, firewall rules), `install/hardware/pacman.sh` (the package repo),
+  `install/user/first-run/t2-omarchy.sh` (the T2 panel at first login).
+  Everything else is upstream Omarchy, and after the install upstream's updates
+  take over as on any Omarchy machine.
+
+An independent, personal project; not endorsed by Omarchy or KaiT2en.
+
 ## The Omarchy Manual
 
 The manual lives in [`manual/`](manual/), which is its authoritative source.
