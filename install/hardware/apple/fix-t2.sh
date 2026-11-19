@@ -341,8 +341,10 @@ EOF
   # The Touch Bar daemon runs in the user's session: its group opens the bar's
   # screen and digitizer, the keyboard's event node (for Fn), uinput and the
   # bar's light. A user created at first boot gets it from the provisioning
-  # record. Enabled globally, the user service also lets t2-touchbar-attach
-  # switch the bar from Apple's firmware row to its screen at boot.
+  # record. Enabled globally, the user service switches the bar from Apple's
+  # firmware row to its screen when the graphical session starts, and back
+  # when it ends (t2-touchbar 0.1.0.r40.b0acfa7-1); the console and the unlock prompt
+  # keep the firmware row with Esc.
   if [[ -n ${OMARCHY_INSTALL_USER:-} ]]; then
     usermod -aG t2-touchbar "$OMARCHY_INSTALL_USER"
   else
