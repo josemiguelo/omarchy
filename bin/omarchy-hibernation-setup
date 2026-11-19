@@ -19,6 +19,18 @@ if omarchy-hw-aarch64-apple; then
   exit 0
 fi
 
+# T2 Macs (the T2 bridge, 106b:1801/1802) hang or come back broken from
+# hibernation: the firmware's S4 step hangs, and in shutdown mode the Radeon,
+# Wi-Fi and T2 bridge drivers don't survive the freeze and restore (tested on
+# a MacBookPro16,1, 2026-11-19). t2-smc-control's t2-low-battery powers off
+# after a low-battery wake instead.
+for dev in /sys/bus/pci/devices/*; do
+  if [[ $(<"$dev/vendor") == 0x106b && $(<"$dev/device") == 0x180[12] ]]; then
+    echo "Skipping hibernation setup (not supported on T2 Macs)"
+    exit 0
+  fi
+done 2>/dev/null
+
 if omarchy-sleep-disabled; then
   echo "Hibernation is turned off on this machine" >&2
   exit 0

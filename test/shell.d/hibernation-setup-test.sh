@@ -8,8 +8,10 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/base-test.sh"
 # a scratch directory, so these cases run without hibernation on the machine.
 rtmp=$(mktemp -d)
 trap 'rm -rf "$rtmp"' EXIT
-mkdir -p "$rtmp/bin" "$rtmp/sys" "$rtmp/sleep"
+mkdir -p "$rtmp/bin" "$rtmp/sys" "$rtmp/sleep" "$rtmp/pci"
+# No PCI devices, so a T2 Mac running the tests isn't skipped as one.
 sed -e "s|/sys/power/|$rtmp/sys/|g" \
+  -e "s|/sys/bus/pci/devices|$rtmp/pci|g" \
   -e "s|/etc/mkinitcpio.conf.d|$rtmp/mkinitcpio.conf.d|g" \
   -e "s|/etc/limine-entry-tool.d|$rtmp/limine-entry-tool.d|g" \
   -e "s|/etc/fstab|$rtmp/fstab|g" \
@@ -135,6 +137,10 @@ rm -rf "$rtmp"
 
 if [[ ! -f /sys/power/image_size ]]; then
   skip "hibernation is unavailable; skipping setup prompt test"
+  exit 0
+fi
+if grep -qsx '0x180[12]' $(grep -lsx 0x106b /sys/bus/pci/devices/*/vendor | sed 's/vendor$/device/'); then
+  skip "a T2 Mac skips hibernation setup; skipping setup prompt test"
   exit 0
 fi
 
