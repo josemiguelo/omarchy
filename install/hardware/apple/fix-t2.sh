@@ -9,7 +9,9 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   # come as one meta-package, t2-mac (and t2-mac-hybrid on dual-GPU models),
   # so a T2 package added later reaches installed Macs with the next update;
   # what t2-mac pulls in:
-  #   t2bce-stack-dkms     BCE bus: internal keyboard/trackpad (t2bce_vhci), audio
+  #   apple-t2-bridge-dkms the T2 bridge: internal keyboard/trackpad, Touch Bar,
+  #                        camera (apple_t2_vhci_hcd), audio (snd_apple_t2), the
+  #                        video encoders (t2_ave, t2_sidecar)
   #   t2smc-dkms           SMC: fans, charge limit, sensors (applesmc cannot reach
   #                        the T2 SMC on a stock kernel)
   #   t2sbs-dkms           battery percentage relative to full, not design capacity
@@ -31,7 +33,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        lifts a battery charge
   #                        limit for a full charge when the gauge needs one to
   #                        recalibrate, as macOS does
-  #   t2bce-audio-ucm      ALSA UCM profiles for t2bce_audio
+  #   apple-t2-audio-ucm   ALSA UCM profiles for snd_apple_t2
   #   t2-trackpad-actuator-dkms, t2-force-click
   #                        the trackpad's Taptic Engine (a haptic click on force
   #                        click; a udev rule hands it its interface, which
@@ -115,7 +117,7 @@ if lspci -nn | grep "106b:180[12]" >/dev/null; then
   #                        left as it is (the dGPU); the T2 panel's Graphics tab
   #                        switches it (the owner's setup picks Hybrid once)
   # All DKMS packages build only for *-omarchy kernels. linux-t2 must not be
-  # installed alongside: it carries its own t2bce for the same PCI device.
+  # installed alongside: it carries its own bridge driver for the same PCI device.
   #
   # The packages come from the signed [t2-arch-packages] repo
   # (install/hardware/pacman.sh). Its keyring goes first so the key is trusted
@@ -298,21 +300,23 @@ EOF
 
   mkdir -p /etc/modules-load.d
   {
-    echo "t2bce_vhci"
+    echo "apple_t2_vhci_hcd"
     echo "hci_bcm4377"
   } > /etc/modules-load.d/t2.conf
 
-  # t2bce_vhci is the virtual USB host controller the internal keyboard hangs
-  # off; mkinitcpio pulls t2bce_core/t2bce_dma in via module dependencies. It
-  # must be in the initramfs to type the disk encryption password.
-  # t2_precision_trackpad goes first: it must be registered when t2bce_vhci
+  # apple_t2_vhci_hcd is the virtual USB host controller the internal keyboard
+  # hangs off, on an auxiliary device of apple_t2_bridge (listed too, as
+  # KaiT2en's initramfs does). Both must be in the initramfs to type the disk
+  # encryption password. (Before 2026-11-19, t2bce_vhci; apple-t2-bridge-dkms's
+  # install script renames it on installed Macs.)
+  # t2_precision_trackpad goes first: it must be registered when apple_t2_vhci_hcd
   # enumerates the trackpad, to take its mouse interface. t2hid, the keyboard
   # driver, must be here for the password prompt; hid-apple is blacklisted
   # below, and modconf carries that blacklist into the image.
   # t2smc before t2sbs, so BAT0 already has charge_control_end_threshold when
   # udev and UPower first see it.
   mkdir -p /etc/mkinitcpio.conf.d
-  echo "MODULES+=(t2_precision_trackpad t2bce_vhci usbhid t2hid hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
+  echo "MODULES+=(t2_precision_trackpad apple_t2_bridge apple_t2_vhci_hcd usbhid t2hid hid_generic xhci_pci xhci_hcd t2smc t2sbs)" > \
     /etc/mkinitcpio.conf.d/apple-t2.conf
 
   # The keyboard and Touch Bar on t2-touchbar-dkms. The package installs its

@@ -98,12 +98,12 @@ t2-fan-control
 t2-smc-control
 t2-dsp
 bankstown-lv2
-t2bce-audio-ucm
+apple-t2-audio-ucm
 t2-wireless-dkms
 t2-precision-trackpad-dkms
 t2-trackpad-actuator-dkms
 t2-force-click
-t2bce-stack-dkms
+apple-t2-bridge-dkms
 t2sbs-dkms
 t2smc-dkms
 t2smp-dkms
